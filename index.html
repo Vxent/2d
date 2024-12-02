@@ -1,3 +1,16 @@
+
+<?php
+session_start();
+include 'db_connection.php';
+
+// Check if the user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header('Location: login.php'); // Redirect to login if not logged in
+    exit();
+}
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -73,8 +86,8 @@
         <!-- Left side layout buttons -->
         <div class="layout-buttons">
             <h2>Choose Layout</h2>
-            <button onclick="applyLayout('layout1')"><img src="shirt.png" alt="Layout 1"></button>
-            <button onclick="applyLayout('layout2')"><img src="jersey.png" alt="Layout 2"></button>
+            <button onclick="applyLayout('layout1')"><img src="layouts/shirt.png" alt="Layout 1"></button>
+            <button onclick="applyLayout('layout2')"><img src="layouts/jersey.png" alt="Layout 2"></button>
         </div>
 
         <!-- Canvas area -->
@@ -279,9 +292,9 @@
                 drawElements();
             };
             if (layout === 'layout1') {
-                layoutImg.src = 'shirt.png';
+                layoutImg.src = 'layouts/shirt.png';
             } else if (layout === 'layout2') {
-                layoutImg.src = 'jersey.png';
+                layoutImg.src = 'layouts/jersey.png';
             }
         }
 
