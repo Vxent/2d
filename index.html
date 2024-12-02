@@ -22,7 +22,8 @@
             margin-bottom: 20px;
         }
 
-        .controls button, .controls input {
+        .controls button,
+        .controls input {
             margin: 5px;
             padding: 10px;
         }
@@ -31,47 +32,84 @@
             margin-bottom: 10px;
         }
 
-        .image-item, .text-item {
+        .image-item,
+        .text-item {
             cursor: move;
+        }
+
+        .preview-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .preview-container img {
+            margin-right: 20px;
+        }
+
+        .layout-buttons {
+            display: flex;
+            flex-direction: column;
+            margin-right: 20px;
+        }
+
+        .layout-buttons img {
+            width: 100px;
+            height: 100px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .canvas-container {
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
+
 <body>
 
     <h1>Basic Design Tool</h1>
 
-    <!-- Canvas area -->
-    <canvas id="canvas" width="800" height="600"></canvas>
-    <script src="script.js"></script>
+    <div class="canvas-container">
+        <!-- Left side layout buttons -->
+        <div class="layout-buttons">
+            <h2>Choose Layout</h2>
+            <button onclick="applyLayout('layout1')"><img src="shirt.png" alt="Layout 1"></button>
+            <button onclick="applyLayout('layout2')"><img src="jersey.png" alt="Layout 2"></button>
 
-    <!-- Controls -->
+        </div>
+
+        <!-- Canvas area -->
+        <canvas id="canvas" width="800" height="600"></canvas>
+    </div>
+
     <div class="controls">
         <input type="text" id="text-input" placeholder="Enter text here">
         <button onclick="addText()">Add Text</button>
         <input type="file" id="image-upload" accept="image/*">
         <button onclick="saveCanvas()">Save</button>
         <button onclick="resetCanvas()">Reset</button>
- 
-        <input type="color" id="color-picker" value="#ffffff">
     </div>
+
+  
 
     <script>
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const canvasPreview = document.getElementById('canvas-preview');
 
         let textElements = [];  // Array to store multiple text elements
         let imageElements = []; // Array to store multiple image elements
         let draggingElement = null; // For dragging an element
-        let shirtImage = new Image();
-       
-
-    
+        let shirtColor = '#ffffff'; // Default shirt color
+        let layoutImage = null; // To store the selected layout image
 
         // Reset the canvas
         function resetCanvas() {
             textElements = [];
             imageElements = [];
-            drawElements(); // Redraw the shirt image on reset
+            layoutImage = null; // Clear layout image
+            drawElements(); // Redraw elements
         }
 
         // Add text to the canvas
@@ -93,13 +131,13 @@
         }
 
         // Add an image to the canvas
-        document.getElementById('image-upload').addEventListener('change', function(event) {
+        document.getElementById('image-upload').addEventListener('change', function (event) {
             const file = event.target.files[0];
-            if (file) {
+            if (file && file.type.startsWith('image/')) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     const img = new Image();
-                    img.onload = function() {
+                    img.onload = function () {
                         const newImage = {
                             img: img,
                             x: 100,
@@ -113,46 +151,70 @@
                     img.src = e.target.result;
                 };
                 reader.readAsDataURL(file);
+            } else {
+                alert("Please upload a valid image file.");
             }
         });
+
 
         // Draw all text and image elements on the canvas
         function drawElements() {
             ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear canvas before redrawing
 
-            // Draw the shirt image first
-            const shirtWidth = canvas.width * 0.8; // 80% of the canvas width
-            const shirtHeight = shirtImage.height * (shirtWidth / shirtImage.width); // Maintain aspect ratio
-            const x = (canvas.width - shirtWidth) / 2; // Center the image horizontally
-            const y = (canvas.height - shirtHeight) / 2; // Center the image vertically
-            
-         
+            // If there's a layout image, draw it first
+            if (layoutImage) {
+                ctx.drawImage(layoutImage, 0, 0, canvas.width, canvas.height);
+            }
 
             // Draw all images
-            imageElements.forEach(function(imageObject) {
+            imageElements.forEach(function (imageObject) {
                 ctx.drawImage(imageObject.img, imageObject.x, imageObject.y, imageObject.width, imageObject.height);
             });
 
             // Draw all texts
-            textElements.forEach(function(textObject) {
+            textElements.forEach(function (textObject) {
                 ctx.font = textObject.font;
                 ctx.fillStyle = textObject.color;
                 ctx.fillText(textObject.text, textObject.x, textObject.y);
             });
+
+        
         }
 
         // Save the current canvas state (as an image)
         function saveCanvas() {
             const dataUrl = canvas.toDataURL('image/png');
+            console.log("Saving canvas...");
             const link = document.createElement('a');
             link.href = dataUrl;
             link.download = 'design.png';
             link.click();
         }
+        
+        // Apply the selected layout by drawing the image on the canvas
+        function applyLayout(layout) {
+            let imageSrc = '';
+            switch (layout) {
+                case 'layout1':
+                    imageSrc = 'shirt.png'; // Path to layout 1 image
+                    break;
+                case 'layout2':
+                    imageSrc = 'jersey.png'; // Path to layout 2 image
+                    break;
+            }
 
-
+            if (imageSrc) {
+                const layoutImg = new Image();
+                layoutImg.crossOrigin = 'anonymous';  // Set the cross-origin attribute
+                layoutImg.onload = function () {
+                layoutImage = layoutImg; // Store the layout image
+                drawElements(); // Redraw the canvas with the new layout and elements
+        };
+        layoutImg.src = imageSrc;
+    }
+        }
         // Function to start dragging an element
-        canvas.addEventListener('mousedown', function(e) {
+        canvas.addEventListener('mousedown', function (e) {
             const mouseX = e.offsetX;
             const mouseY = e.offsetY;
             draggingElement = null;
@@ -189,7 +251,7 @@
         });
 
         // Drag an element
-        canvas.addEventListener('mousemove', function(e) {
+        canvas.addEventListener('mousemove', function (e) {
             if (draggingElement) {
                 const mouseX = e.offsetX;
                 const mouseY = e.offsetY;
@@ -200,9 +262,10 @@
         });
 
         // Stop dragging an element
-        canvas.addEventListener('mouseup', function() {
+        canvas.addEventListener('mouseup', function () {
             draggingElement = null;
         });
     </script>
 </body>
+
 </html>
