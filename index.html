@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -87,11 +88,13 @@
         <input type="text" id="text-input" placeholder="Enter text here">
         <button onclick="addText()">Add Text</button>
         <input type="file" id="image-upload" accept="image/*">
+        <input type="color" id="color-picker" />
         <button onclick="saveCanvas()">Save</button>
         <button onclick="resetCanvas()">Reset</button>
+
     </div>
 
-  
+
 
     <script>
         const canvas = document.getElementById('canvas');
@@ -155,6 +158,62 @@
                 alert("Please upload a valid image file.");
             }
         });
+        // Add an event listener for the color picker
+        document.getElementById('color-picker').addEventListener('input', function (e) {
+            const selectedColor = e.target.value;  // Get the selected color in HEX format
+            changeLayoutColor(selectedColor);
+        });
+
+        // Function to change the layout color
+        function changeLayoutColor(selectedColor) {
+            if (layoutImage) {
+                // Create a temporary canvas to manipulate the layout image
+                const tempCanvas = document.createElement('canvas');
+                const tempCtx = tempCanvas.getContext('2d');
+
+                // Set the temporary canvas size to the layout image size
+                tempCanvas.width = layoutImage.width;
+                tempCanvas.height = layoutImage.height;
+
+                // Draw the layout image on the temporary canvas
+                tempCtx.drawImage(layoutImage, 0, 0);
+
+                // Get the image data from the temporary canvas
+                const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+                const data = imageData.data;
+
+                // Convert the selected color to RGB values
+                const color = hexToRgb(selectedColor);
+
+                // Loop through each pixel and adjust the color
+                for (let i = 0; i < data.length; i += 4) {
+                    // Only modify pixels that are not transparent
+                    if (data[i + 3] > 0) {
+                        data[i] = color.r;      // Red channel
+                        data[i + 1] = color.g;  // Green channel
+                        data[i + 2] = color.b;  // Blue channel
+                    }
+                }
+
+                // Put the modified image data back into the temporary canvas
+                tempCtx.putImageData(imageData, 0, 0);
+
+                // Draw the modified image onto the main canvas
+                layoutImage = tempCanvas;  // Update the layout image
+                drawElements();  // Redraw the canvas with the updated layout
+            }
+        }
+
+        // Helper function to convert HEX to RGB
+        function hexToRgb(hex) {
+            // Remove the '#' if present
+            hex = hex.replace('#', '');
+            return {
+                r: parseInt(hex.substring(0, 2), 16),
+                g: parseInt(hex.substring(2, 4), 16),
+                b: parseInt(hex.substring(4, 6), 16)
+            };
+        }
 
 
         // Draw all text and image elements on the canvas
@@ -178,7 +237,7 @@
                 ctx.fillText(textObject.text, textObject.x, textObject.y);
             });
 
-        
+
         }
 
         // Save the current canvas state (as an image)
@@ -190,7 +249,7 @@
             link.download = 'design.png';
             link.click();
         }
-        
+
         // Apply the selected layout by drawing the image on the canvas
         function applyLayout(layout) {
             let imageSrc = '';
@@ -207,11 +266,11 @@
                 const layoutImg = new Image();
                 layoutImg.crossOrigin = 'anonymous';  // Set the cross-origin attribute
                 layoutImg.onload = function () {
-                layoutImage = layoutImg; // Store the layout image
-                drawElements(); // Redraw the canvas with the new layout and elements
-        };
-        layoutImg.src = imageSrc;
-    }
+                    layoutImage = layoutImg; // Store the layout image
+                    drawElements(); // Redraw the canvas with the new layout and elements
+                };
+                layoutImg.src = imageSrc;
+            }
         }
         // Function to start dragging an element
         canvas.addEventListener('mousedown', function (e) {
